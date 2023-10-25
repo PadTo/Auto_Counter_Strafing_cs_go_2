@@ -4,9 +4,11 @@ import os
 import threading
 import time
 
-
+# Initializing keyboard and mouse controllers
 keyboard_controller = KeyboardController()
 mouse_controller = MouseController()
+
+# A dictionary for opposite in-game movement
 counter_movement = {
     'a': 'd',
     'd': 'a',
@@ -21,26 +23,31 @@ counter_movement = {
     'wa': 'sd',
     'aw': 'ds'
 }
-simulated_press = False
-active_keys = set()
-key_press_times = 0
-long_press_duration = 0.05
-short_press_duration = 0.07
-mouse_scroll_times = 0
-enabled = True
 
+# Global variables needed for the algorithm
+
+simulated_press = False         # Is the press made by a human or the program?
+active_keys = set()             # Tracking currently pressed keys
+
+# This is to track the time between subsequent scrolls (I jump with scroll wheel), it deactivates the opposite movement while mid-air
+mouse_scroll_times = 0
+enabled = True                  # A condition for activation an de-activation of the code
+# This is the condition of when you are jumping, if you are, then it is set to True
 activated = False
+
+# Press function
 
 
 def on_press_button(key):
     global simulated_press
-    global key_press_times
     global pressed_time
     global enabled
     try:
 
+        # When q is pressed, quit the entire program
         if key.char == 'q':
             os._exit(0)
+        # When t is pressed, pause the program
         if key.char == 't':
             enabled = not enabled
             return
@@ -50,6 +57,8 @@ def on_press_button(key):
         if simulated_press:
             simulated_press = False
             return
+
+        # Tracking currently pressed key and time of the press
         if key.char in counter_movement:
             pressed_time = time.time()
             active_keys.add(key.char)
@@ -57,6 +66,8 @@ def on_press_button(key):
 
     except AttributeError:
         pass
+
+# A function where the opposite press time of a key is correlated with the players momentum (These values came purely from testing in-game)
 
 
 def get_sleep_duration(time_between_press_and_release):
@@ -85,6 +96,8 @@ def get_sleep_duration(time_between_press_and_release):
     else:
         return 0  # Default case
 
+# Release function
+
 
 def on_release_button(key):
     global simulated_press, active_keys, pressed_time
@@ -93,13 +106,18 @@ def on_release_button(key):
 
     try:
         if key.char in active_keys:
+
+            # Tracking the release time and removing the button from active keys
             released_time = time.time()
             active_keys.remove(key.char)
             counter_key = counter_movement.get(key.char)
-
             time_between_press_and_release = released_time - pressed_time
-            print(time_between_press_and_release)
 
+            # print(time_between_press_and_release)
+
+            # This condition takes into account if you are in mid-air and if the keys your holding is equal to 1.
+            # It is important to note that the "len(active_keys) >= 1" condition is implemented due to whacky movement while moving forward continuously
+            # while moving forward continuously and then trying to move left or right
             if counter_key and not activated and not len(active_keys) >= 1:
 
                 simulated_press = True
@@ -112,20 +130,25 @@ def on_release_button(key):
     except AttributeError:
         pass
 
+# While air-born function
+
 
 def active_for_one_second(dy):
     global activated
     global mouse_scroll_times
-    scroll_threshold = 0.05
+    scroll_threshold = 0.05  # This is simply the the threshold time between scrolls
 
     current_time = time.time()
     duration_since_last_scroll = current_time - mouse_scroll_times
     mouse_scroll_times = current_time
 
+    # If jumped then activate the jumping condition "activated"
     if dy > 0 and duration_since_last_scroll > scroll_threshold:
         activated = True
         time.sleep(1.2)
         activated = False
+
+# Scrolling function
 
 
 def on_scroll(x, y, dx, dy):
