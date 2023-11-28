@@ -33,7 +33,6 @@ This project consists of Python scripts designed to enhance Counter-Strike: Glob
 **Scripts Overview**
 
 - Main Counter-Strafing Script: Automates counter-movements based on the player's current movement keys.
-- Mouse Click Delay Script: Delays mouse clicks for controlled firing. #Does not currently work#
 - Alternate Strafing Script: A variation of the main script with different timings and behaviours.
 
 **Disclaimer**
